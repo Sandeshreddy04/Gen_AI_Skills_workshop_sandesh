@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ADS Virtual Assistant — Alaska Department of Snow</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #f5f5f0;
+      --gray-100: #ebebeb;
+      --gray-200: #d4d4d4;
+      --gray-400: #9a9a9a;
+      --gray-600: #5a5a5a;
+      --accent: #1a1a1a;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      grid-column: 1 / -1;
+      border-bottom: 2px solid var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 64px;
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 2px;
+    }
+
+    header h1 {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      color: var(--white);
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--gray-400);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      background: #6ee7b7;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Sidebar ── */
+    aside {
+      grid-row: 2;
+      border-right: 1px solid var(--gray-200);
+      padding: 28px 0;
+      overflow-y: auto;
+      background: #fafaf8;
+    }
+
+    .sidebar-section {
+      padding: 0 20px;
+      margin-bottom: 28px;
+    }
+
+    .sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .quick-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 9px 12px;
+      margin-bottom: 6px;
+      background: transparent;
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      line-height: 1.4;
+    }
+
+    .quick-btn:hover {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+    }
+
+    .info-card {
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      padding: 14px;
+      font-size: 12.5px;
+      color: var(--gray-600);
+      line-height: 1.7;
+    }
+
+    .info-card strong {
+      color: var(--black);
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .info-card a {
+      color: var(--black);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* ── Main chat area ── */
+    main {
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--gray-200);
+      background: #fafaf8;
+      padding: 0 24px;
+      gap: 0;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 14px 20px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--gray-400);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      text-transform: uppercase;
+    }
+
+    .tab-btn:hover { color: var(--black); }
+    .tab-btn.active {
+      color: var(--black);
+      border-bottom-color: var(--black);
+    }
+
+    .tab-panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .tab-panel.active { display: flex; }
+
+    /* ── Chat Panel ── */
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-container::-webkit-scrollbar { width: 4px; }
+    .chat-container::-webkit-scrollbar-track { background: transparent; }
+    .chat-container::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 2px; }
+
+    .message-group {
+      margin-bottom: 28px;
+      animation: fadeSlide 0.25s ease both;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
+
+    .message-bubble {
+      max-width: 680px;
+      padding: 14px 18px;
+      border-radius: 2px;
+      font-size: 14.5px;
+      line-height: 1.7;
+    }
+
+    .message-bubble.user {
+      background: var(--black);
+      color: var(--white);
+      margin-left: auto;
+      max-width: 560px;
+    }
+
+    .message-bubble.bot {
+      background: var(--gray-100);
+      color: var(--black);
+      border-left: 3px solid var(--black);
+    }
+
+    .message-group.user-group { display: flex; flex-direction: column; align-items: flex-end; }
+    .message-group.user-group .message-meta { text-align: right; }
+
+    /* ── Welcome state ── */
+    .welcome {
+      text-align: center;
+      padding: 60px 32px;
+    }
+
+    .welcome-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .welcome h2 {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .welcome p {
+      color: var(--gray-600);
+      max-width: 420px;
+      margin: 0 auto 28px;
+      font-size: 14px;
+    }
+
+    .welcome-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .chip {
+      padding: 8px 14px;
+      border: 1px solid var(--black);
+      border-radius: 999px;
+      font-size: 12.5px;
+      color: var(--black);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: transparent;
+      font-family: var(--font-sans);
+    }
+
+    .chip:hover {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    /* ── Typing indicator ── */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 0 32px 20px;
+    }
+
+    .typing-indicator.visible { display: flex; }
+
+    .typing-indicator span {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--gray-400);
+      letter-spacing: 0.08em;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .typing-dot {
+      width: 5px; height: 5px;
+      background: var(--gray-400);
+      border-radius: 50%;
+      animation: dotBounce 1.2s ease-in-out infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    /* ── Input bar ── */
+    .input-bar {
+      border-top: 1px solid var(--gray-200);
+      padding: 16px 24px;
+      background: var(--white);
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      resize: none;
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--black);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s ease;
+      line-height: 1.5;
+      min-height: 48px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    textarea:focus { border-color: var(--black); }
+    textarea::placeholder { color: var(--gray-400); }
+
+    .send-btn {
+      padding: 12px 22px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      height: 48px;
+      white-space: nowrap;
+    }
+
+    .send-btn:hover { background: var(--gray-600); }
+    .send-btn:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; }
+
+    .char-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--gray-400);
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+    }
+
+    /* ── Logs Panel ── */
+    .logs-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+    }
+
+    .logs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .logs-header h2 {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+    }
+
+    .refresh-btn {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 8px 14px;
+      border: 1px solid var(--black);
+      background: transparent;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.15s ease;
+      border-radius: 2px;
+    }
+
+    .refresh-btn:hover { background: var(--black); color: var(--white); }
+
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .log-table th {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      border-bottom: 2px solid var(--black);
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .log-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-200);
+      color: var(--gray-600);
+      vertical-align: top;
+    }
+
+    .log-table tr:hover td { background: var(--gray-100); }
+
+    .badge-valid { color: #059669; font-weight: 600; font-family: var(--font-mono); font-size: 11px; }
+    .badge-invalid { color: #dc2626; font-weight: 600; font-family: var(--font-mono); font-size: 11px; }
+
+    /* ── About Panel ── */
+    .about-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+      max-width: 680px;
+    }
+
+    .about-panel h2 {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .about-panel .subtitle {
+      color: var(--gray-400);
+      font-size: 13px;
+      margin-bottom: 32px;
+      font-family: var(--font-mono);
+    }
+
+    .arch-block {
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .arch-block h3 {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--black);
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--gray-200);
+      padding-bottom: 8px;
+    }
+
+    .arch-block p, .arch-block li {
+      font-size: 13.5px;
+      color: var(--gray-600);
+      line-height: 1.7;
+    }
+
+    .arch-block ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .arch-block ul li::before {
+      content: "→";
+      margin-right: 8px;
+      color: var(--gray-400);
+      font-family: var(--font-mono);
+    }
+
+    .pipeline-flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .flow-step {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 12px;
+      border: 1px solid var(--black);
+      border-radius: 2px;
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .flow-arrow {
+      font-family: var(--font-mono);
+      color: var(--gray-400);
+      font-size: 14px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--gray-200);
+      padding: 10px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafaf8;
+    }
+
+    footer p {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--gray-400);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+      }
+      aside { display: none; }
+      footer { flex-direction: column; gap: 4px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-brand">
+      <span class="header-badge">ADS</span>
+      <h1>Alaska Department of Snow — Virtual Assistant</h1>
+    </div>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      <span>SYSTEM ONLINE</span>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Quick Questions</span>
+      <button class="quick-btn" onclick="sendQuick(this)">When will my road be plowed?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">How do I find out if school is closed?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">ADS Anchorage office number?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">Does ADS plow private driveways?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">How do I report an icy road?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">What is a Travel Not Recommended advisory?</button>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="sidebar-label">Emergency Contacts</span>
+      <div class="info-card">
+        <strong>24/7 ADS Hotline</strong>
+        1-800-ADS-SNOW<br>
+        (1-800-237-7669)
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="info-card">
+        <strong>Road Conditions</strong>
+        <a href="https://511.alaska.gov" target="_blank">511.alaska.gov</a><br>
+        or dial <strong>511</strong>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="info-card">
+        <strong>School Closures</strong>
+        <a href="http://www.alaska.gov/schoolclosures" target="_blank">alaska.gov/schoolclosures</a><br>
+        Check after 6:00 AM
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="info-card">
+        <strong>Road Emergencies</strong>
+        Alaska State Troopers<br>
+        <strong>911</strong> or 907-269-5511
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('chat', this)">💬 Chat</button>
+      <button class="tab-btn" onclick="switchTab('logs', this)">📋 Logs</button>
+      <button class="tab-btn" onclick="switchTab('about', this)">ℹ️ Architecture</button>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div class="tab-panel active" id="panel-chat">
+      <div class="chat-container" id="chatContainer">
+        <div class="welcome" id="welcomeMsg">
+          <span class="welcome-icon">🏔️</span>
+          <h2>How can I help you today?</h2>
+          <p>Ask me about road conditions, plowing schedules, school closures, and more. For emergencies, call <strong>911</strong>.</p>
+          <div class="welcome-chips">
+            <button class="chip" onclick="sendQuick(this)">Road plowing priority?</button>
+            <button class="chip" onclick="sendQuick(this)">School closure info</button>
+            <button class="chip" onclick="sendQuick(this)">Report icy road</button>
+            <button class="chip" onclick="sendQuick(this)">Sand barrel locations</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+        <span>ADS ASSISTANT IS RESPONDING...</span>
+      </div>
+
+      <!-- Input -->
+      <div class="input-bar">
+        <div class="input-wrap">
+          <textarea
+            id="msgInput"
+            placeholder="Type your question about road conditions, plowing, school closures..."
+            rows="1"
+            maxlength="1000"
+            onkeydown="handleKey(event)"
+            oninput="updateCharCount(this)"
+          ></textarea>
+          <span class="char-count" id="charCount">0/1000</span>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send ↑</button>
+      </div>
+    </div>
+
+    <!-- LOGS TAB -->
+    <div class="tab-panel" id="panel-logs">
+      <div class="logs-panel">
+        <div class="logs-header">
+          <h2>CONVERSATION_LOGS</h2>
+          <button class="refresh-btn" onclick="loadLogs()">↻ Refresh</button>
+        </div>
+        <table class="log-table" id="logTable">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Session ID</th>
+              <th>User Input</th>
+              <th>Valid</th>
+              <th>Latency (ms)</th>
+            </tr>
+          </thead>
+          <tbody id="logBody">
+            <tr><td colspan="5" style="color: var(--gray-400); font-family: var(--font-mono); font-size: 12px;">Click Refresh to load logs from the Python backend.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ABOUT TAB -->
+    <div class="tab-panel" id="panel-about">
+      <div class="about-panel">
+        <h2>System Architecture</h2>
+        <p class="subtitle">ADS Chatbot v1.0 — RAG + Gemini Pipeline</p>
+
+        <div class="arch-block">
+          <h3>RAG Pipeline</h3>
+          <p>User queries are embedded using <code>sentence-transformers/all-MiniLM-L6-v2</code> and matched against ADS knowledge base documents stored in a <strong>FAISS</strong> flat inner-product vector index. Top-4 most relevant chunks are injected into the prompt context.</p>
+          <div class="pipeline-flow">
+            <span class="flow-step">User Query</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Embedding</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">FAISS Search</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Top-K Docs</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Gemini 1.5</span>
+          </div>
+        </div>
+
+        <div class="arch-block">
+          <h3>Language Model</h3>
+          <p>Google Gemini 1.5 Flash with <code>temperature=0.2</code> for consistent, factual, low-hallucination answers. Max 512 output tokens per response.</p>
+        </div>
+
+        <div class="arch-block">
+          <h3>Safety Layers</h3>
+          <ul>
+            <li>Input filter: length cap, prompt injection detection, PII redaction</li>
+            <li>Off-topic guard: minimum RAG similarity score threshold (0.25)</li>
+            <li>Gemini built-in safety: harassment, hate speech, dangerous content</li>
+            <li>Response validator: minimum length, blocklist pattern matching</li>
+          </ul>
+        </div>
+
+        <div class="arch-block">
+          <h3>Logging & Privacy</h3>
+          <ul>
+            <li>All interactions logged to SQLite with session ID, timestamp, latency, validity</li>
+            <li>PII redacted before storage (SSN, credit card, email)</li>
+            <li>Input truncated to 500 chars in logs</li>
+            <li>Responses grounded strictly in ADS-approved documentation</li>
+          </ul>
+        </div>
+
+        <div class="arch-block">
+          <h3>Knowledge Base (8 Documents)</h3>
+          <ul>
+            <li>Snow Plowing Priority Schedule</li>
+            <li>School Closure Decision Process</li>
+            <li>Road Conditions & Travel Advisories</li>
+            <li>ADS Regional Contact Information</li>
+            <li>Storm Forecast Response Protocol</li>
+            <li>Sand & Salt Application Policy</li>
+            <li>Reporting Snow & Road Issues</li>
+            <li>Private Roads & ADS Jurisdiction</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2025 Alaska Department of Snow — ADS Virtual Assistant</p>
+    <p>NOT FOR EMERGENCIES — CALL 911 OR 1-800-237-7669 FOR URGENT SITUATIONS</p>
+  </footer>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  const API_BASE = 'http://localhost:5000'; // Point to your Flask backend
+  let sessionId = crypto.randomUUID();
+  let messageHistory = [];
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+    if (name === 'logs') loadLogs();
+  }
+
+  // ── Chat logic ─────────────────────────────────────────────────────────────
+  function sendQuick(btn) {
+    const q = btn.textContent.trim();
+    const inp = document.getElementById('msgInput');
+    inp.value = q;
+    sendMessage();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function updateCharCount(el) {
+    document.getElementById('charCount').textContent = el.value.length + '/1000';
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  async function sendMessage() {
+    const inp = document.getElementById('msgInput');
+    const text = inp.value.trim();
+    if (!text) return;
+
+    // Hide welcome
+    const welcome = document.getElementById('welcomeMsg');
+    if (welcome) welcome.style.display = 'none';
+
+    // Append user message
+    appendMessage('user', text);
+    inp.value = '';
+    inp.style.height = 'auto';
+    document.getElementById('charCount').textContent = '0/1000';
+
+    // Show typing
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('typingIndicator').classList.add('visible');
+
+    try {
+      const response = await fetch(`${API_BASE}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, session_id: sessionId })
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      appendMessage('bot', data.response || 'No response received.');
+    } catch (err) {
+      // Fallback: demo mode (no backend)
+      appendMessage('bot', getDemoResponse(text));
+    }
+
+    document.getElementById('typingIndicator').classList.remove('visible');
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  function appendMessage(role, text) {
+    const container = document.getElementById('chatContainer');
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    const group = document.createElement('div');
+    group.className = `message-group ${role === 'user' ? 'user-group' : ''}`;
+
+    const meta = document.createElement('div');
+    meta.className = 'message-meta';
+    meta.textContent = (role === 'user' ? 'YOU' : 'ADS ASSISTANT') + ' · ' + timeStr;
+
+    const bubble = document.createElement('div');
+    bubble.className = `message-bubble ${role}`;
+    bubble.textContent = text;
+
+    group.appendChild(meta);
+    group.appendChild(bubble);
+    container.appendChild(group);
+    container.scrollTop = container.scrollHeight;
+
+    messageHistory.push({ role, text, time: timeStr });
+  }
+
+  // Demo responses (fallback when no backend)
+  function getDemoResponse(question) {
+    const q = question.toLowerCase();
+    if (q.includes('plow') || q.includes('priority')) {
+      return "The Alaska Department of Snow follows a three-tier priority plowing system. Priority 1 routes (major highways, hospital access) are plowed within 2 hours of 2 inches accumulation. Priority 2 routes (secondary roads, school bus routes) within 4–6 hours. Priority 3 routes (residential) are addressed after 1 and 2 are complete. Check real-time plow locations at 511.alaska.gov.";
+    }
+    if (q.includes('school') || q.includes('closure') || q.includes('closed')) {
+      return "School closure decisions are made by 5:30 AM on storm days. Check www.alaska.gov/schoolclosures after 6 AM, or listen to KFQD 750 AM, KTUU, or KTVA. Please do NOT call ADS directly — contact your school district office instead.";
+    }
+    if (q.includes('anchorage') && q.includes('phone') || q.includes('contact')) {
+      return "ADS Regional contacts:\n• Anchorage: 907-269-0700\n• Fairbanks: 907-451-2210\n• Juneau: 907-465-2960\n• Kenai: 907-262-5544\n• Mat-Su: 907-373-3636\n\n24/7 Storm Hotline: 1-800-237-7669";
+    }
+    if (q.includes('private') || q.includes('driveway')) {
+      return "No, ADS maintains Alaska State highways and roads within the state right-of-way only. ADS does not maintain private driveways, borough roads, municipal streets, or federal roads. Check maps.alaska.gov/roads to confirm jurisdiction for your road.";
+    }
+    if (q.includes('icy') || q.includes('report') || q.includes('hazard')) {
+      return "Report dangerous icy patches or unplowed roads at report.alaska.gov/ads (fastest response), or by calling your regional ADS office during business hours. Ice/hazard reports are prioritized. Average acknowledgment time is 2 business hours.";
+    }
+    if (q.includes('sand') || q.includes('salt') || q.includes('barrel')) {
+      return "ADS applies a sand-salt mixture (90% sand / 10% salt) on state highways. Sand barrels are available at 200+ locations statewide for public use — search 511.alaska.gov for the nearest barrel. ADS does not provide sand or salt to private residences.";
+    }
+    return "I can help with questions about ADS snow removal, road conditions, school closures, plowing schedules, and more. For immediate assistance, call the ADS hotline at 1-800-237-7669 or visit alaska.gov/ads.\n\n(Note: Backend server not connected. This is a demo response.)";
+  }
+
+  // ── Logs ──────────────────────────────────────────────────────────────────
+  async function loadLogs() {
+    const body = document.getElementById('logBody');
+    body.innerHTML = '<tr><td colspan="5" style="color: var(--gray-400); font-family: var(--font-mono); font-size: 12px;">Loading...</td></tr>';
+
+    try {
+      const res = await fetch(`${API_BASE}/logs`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      renderLogs(data.logs);
+    } catch {
+      // Fallback: show local session history
+      if (messageHistory.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="color: var(--gray-400); font-family: var(--font-mono); font-size: 12px;">No backend connected. Chat to generate session data.</td></tr>';
+        return;
+      }
+      const fakeRows = messageHistory.filter(m => m.role === 'user').map(m => ({
+        timestamp: new Date().toISOString(),
+        session_id: sessionId.slice(0, 8) + '...',
+        user_input: m.text,
+        valid: 1,
+        latency_ms: (Math.random() * 300 + 100).toFixed(1)
+      }));
+      renderLogs(fakeRows);
+    }
+  }
+
+  function renderLogs(rows) {
+    const body = document.getElementById('logBody');
+    if (!rows || rows.length === 0) {
+      body.innerHTML = '<tr><td colspan="5" style="color: var(--gray-400); font-family: var(--font-mono); font-size: 12px;">No logs found.</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(r => `
+      <tr>
+        <td style="font-family: var(--font-mono); font-size: 11px; white-space: nowrap;">${r.timestamp ? r.timestamp.slice(0,19).replace('T',' ') : '—'}</td>
+        <td style="font-family: var(--font-mono); font-size: 11px;">${r.session_id || '—'}</td>
+        <td style="max-width: 280px;">${r.user_input || '—'}</td>
+        <td class="${r.valid ? 'badge-valid' : 'badge-invalid'}">${r.valid ? '✓ YES' : '✗ NO'}</td>
+        <td style="font-family: var(--font-mono); font-size: 11px;">${r.latency_ms ? parseFloat(r.latency_ms).toFixed(1) : '—'}</td>
+      </tr>
+    `).join('');
+  }
+</script>
+
+</body>
+</html>
